@@ -59,11 +59,12 @@ def test_login(email, password):
 def test_publisher_readings(session_id):
     url = f"{BASE_URL}/Publisher/ReadPublisherLatestGlucoseValues"
     params = {
+        "sessionId": session_id,
         "minutes": 1440,
         "maxCount": 1,
     }
     try:
-        resp = requests.post(url, params=params, json={"sessionId": session_id}, timeout=10)
+        resp = requests.post(url, params=params, timeout=10)
 
         print(f"\n         [DEBUG] HTTP {resp.status_code}")
         print(f"         [DEBUG] Raw response: {resp.text[:500]}")
