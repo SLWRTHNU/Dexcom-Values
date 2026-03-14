@@ -61,7 +61,11 @@ FOLLOWER_ENDPOINTS = [
     "Follower/ListFollowers",
     "Follower/GetContacts",
     "Follower/Contacts",
+    "Follow/ListFollowerContacts",
+    "Follow/ListFollowers",
+    "Follow/GetContacts",
     "General/Contacts",
+    "General/ListContacts",
 ]
 
 def test_follower_contacts(session_id):
