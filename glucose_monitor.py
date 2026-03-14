@@ -58,24 +58,14 @@ def login(email, password):
     return session_id
 
 
-def get_follower_contacts(session_id):
-    url = f"{BASE_URL}/Follower/ListFollowerContacts"
-    resp = requests.post(url, params={"sessionId": session_id}, timeout=10)
-
-    if resp.status_code == 500:
-        raise SessionExpiredError("Session expired")
-    resp.raise_for_status()
-    return resp.json()
-
-
-def get_latest_glucose(session_id, contact_id):
-    url = f"{BASE_URL}/Follower/ReadFollowerLatestGlucoseValues"
+def get_latest_glucose(session_id):
+    url = f"{BASE_URL}/Publisher/ReadPublisherLatestGlucoseValues"
     params = {
         "sessionId": session_id,
-        "contactId": contact_id,
+        "minutes": 1440,
         "maxCount": 1,
     }
-    resp = requests.get(url, params=params, timeout=10)
+    resp = requests.post(url, params=params, timeout=10)
 
     if resp.status_code == 500:
         raise SessionExpiredError("Session expired")
@@ -130,26 +120,6 @@ def main():
         print(f"  Unexpected error: {e}")
         sys.exit(1)
 
-    # --- Find follower contact ---
-    print("Finding followed contacts ...", end=" ", flush=True)
-    try:
-        contacts = get_follower_contacts(session_id)
-    except Exception as e:
-        print("FAILED")
-        print(f"  {e}")
-        sys.exit(1)
-
-    if not contacts:
-        print("FAILED")
-        print("  No followed contacts found.")
-        print("  Make sure your daughter has accepted your Dexcom Follow invitation.")
-        sys.exit(1)
-
-    contact = contacts[0]
-    contact_id = contact.get("ContactId")
-    name = f"{contact.get('FirstName', 'Unknown')} {contact.get('LastName', '')}".strip()
-    print("OK")
-    print(f"  Monitoring: {name}")
     print()
     print(f"  {'Time':^10}  {'Glucose':^12}  {'Trend':^10}")
     print("  " + "-" * 40)
@@ -160,7 +130,7 @@ def main():
 
     while True:
         try:
-            readings = get_latest_glucose(session_id, contact_id)
+            readings = get_latest_glucose(session_id)
             consecutive_errors = 0
 
             if readings:

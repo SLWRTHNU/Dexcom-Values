@@ -56,10 +56,15 @@ def test_login(email, password):
         return False, f"Unexpected error: {e}"
 
 
-def test_follower_contacts(session_id):
-    url = f"{BASE_URL}/Follower/ListFollowerContacts"
+def test_publisher_readings(session_id):
+    url = f"{BASE_URL}/Publisher/ReadPublisherLatestGlucoseValues"
+    params = {
+        "sessionId": session_id,
+        "minutes": 1440,
+        "maxCount": 1,
+    }
     try:
-        resp = requests.post(url, params={"sessionId": session_id}, timeout=10)
+        resp = requests.post(url, params=params, timeout=10)
 
         if resp.status_code == 200:
             return True, resp.json()
@@ -114,26 +119,22 @@ def main():
             print("OK")
             print(f"         Session: {session_id[:8]}...{session_id[-4:]}")
 
-            print("Step 2: Fetching follower contacts ...", end=" ", flush=True)
-            ok, contacts = test_follower_contacts(session_id)
+            print("Step 2: Fetching latest glucose reading ...", end=" ", flush=True)
+            ok, readings = test_publisher_readings(session_id)
 
             if not ok:
                 print("FAILED")
-                print(f"         Reason: {contacts}")
+                print(f"         Reason: {readings}")
             else:
                 print("OK")
-                if not contacts:
-                    print("         No followed contacts found.")
-                    print("         Make sure your daughter has accepted your Follow invitation.")
+                if not readings:
+                    print("         No readings returned — sensor may not be active")
                 else:
-                    print(f"         Found {len(contacts)} contact(s):")
-                    for c in contacts:
-                        name = f"{c.get('FirstName', '?')} {c.get('LastName', '?')}"
-                        cid = c.get("ContactId", "?")
-                        print(f"           - {name.strip()} (ID: {cid})")
+                    r = readings[0]
+                    print(f"         Latest reading: {r.get('Value')} mg/dL  trend={r.get('Trend')}")
 
                 print()
-                print("Login successful!")
+                print("Everything working!")
                 try:
                     save = input("Save these credentials to .env for the monitor? (y/n): ").strip().lower()
                 except KeyboardInterrupt:
