@@ -56,31 +56,26 @@ def test_login(email, password):
         return False, f"Unexpected error: {e}"
 
 
-def test_publisher_readings(session_id):
-    url = f"{BASE_URL}/Publisher/ReadPublisherLatestGlucoseValues"
-    params = {
-        "sessionId": session_id,
-        "minutes": 1440,
-        "maxCount": 1,
-    }
-    try:
-        resp = requests.post(url, params=params, timeout=10)
+def test_follower_contacts(session_id):
+    """Try listing follower contacts via GET and POST."""
+    url = f"{BASE_URL}/Follower/ListFollowerContacts"
+    params = {"sessionId": session_id}
 
-        print(f"\n         [DEBUG] HTTP {resp.status_code}")
-        print(f"         [DEBUG] Raw response: {resp.text[:500]}")
-        if resp.status_code == 200:
-            return True, resp.json()
-        else:
-            try:
-                body = resp.json()
-            except Exception:
-                body = resp.text
-            return False, f"HTTP {resp.status_code}: {body}"
+    for method in ("GET", "POST"):
+        try:
+            if method == "GET":
+                resp = requests.get(url, params=params, timeout=10)
+            else:
+                resp = requests.post(url, params=params, timeout=10)
 
-    except requests.exceptions.Timeout:
-        return False, "Request timed out"
-    except Exception as e:
-        return False, f"Unexpected error: {e}"
+            print(f"\n         [DEBUG] {method} {resp.status_code}: {resp.text[:300]}")
+
+            if resp.status_code == 200:
+                return True, resp.json()
+        except Exception as e:
+            print(f"\n         [DEBUG] {method} exception: {e}")
+
+    return False, "Both GET and POST failed for ListFollowerContacts"
 
 
 def main():
@@ -121,19 +116,23 @@ def main():
             print("OK")
             print(f"         Session: {session_id[:8]}...{session_id[-4:]}")
 
-            print("Step 2: Fetching latest glucose reading ...", end=" ", flush=True)
-            ok, readings = test_publisher_readings(session_id)
+            print("Step 2: Fetching follower contacts ...", end=" ", flush=True)
+            ok, contacts = test_follower_contacts(session_id)
 
             if not ok:
                 print("FAILED")
-                print(f"         Reason: {readings}")
+                print(f"         Reason: {contacts}")
             else:
                 print("OK")
-                if not readings:
-                    print("         No readings returned — sensor may not be active")
+                if not contacts:
+                    print("         Logged in but no followed contacts found.")
+                    print("         Make sure your daughter has accepted the Follow invite.")
                 else:
-                    r = readings[0]
-                    print(f"         Latest reading: {r.get('Value')} mg/dL  trend={r.get('Trend')}")
+                    print(f"         Found {len(contacts)} contact(s):")
+                    for c in contacts:
+                        name = f"{c.get('FirstName', '?')} {c.get('LastName', '?')}".strip()
+                        cid = c.get("ContactId", "?")
+                        print(f"           - {name} (ContactId: {cid})")
 
                 print()
                 print("Everything working!")
