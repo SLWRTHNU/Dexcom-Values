@@ -61,11 +61,10 @@ def login(email, password):
 def get_latest_glucose(session_id):
     url = f"{BASE_URL}/Publisher/ReadPublisherLatestGlucoseValues"
     params = {
-        "sessionId": session_id,
         "minutes": 1440,
         "maxCount": 1,
     }
-    resp = requests.post(url, params=params, timeout=10)
+    resp = requests.post(url, params=params, json={"sessionId": session_id}, timeout=10)
 
     if resp.status_code == 500:
         raise SessionExpiredError("Session expired")

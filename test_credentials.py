@@ -59,12 +59,11 @@ def test_login(email, password):
 def test_publisher_readings(session_id):
     url = f"{BASE_URL}/Publisher/ReadPublisherLatestGlucoseValues"
     params = {
-        "sessionId": session_id,
         "minutes": 1440,
         "maxCount": 1,
     }
     try:
-        resp = requests.post(url, params=params, timeout=10)
+        resp = requests.post(url, params=params, json={"sessionId": session_id}, timeout=10)
 
         if resp.status_code == 200:
             return True, resp.json()
