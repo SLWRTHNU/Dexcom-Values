@@ -65,6 +65,8 @@ def test_publisher_readings(session_id):
     try:
         resp = requests.post(url, params=params, json={"sessionId": session_id}, timeout=10)
 
+        print(f"\n         [DEBUG] HTTP {resp.status_code}")
+        print(f"         [DEBUG] Raw response: {resp.text[:500]}")
         if resp.status_code == 200:
             return True, resp.json()
         else:
