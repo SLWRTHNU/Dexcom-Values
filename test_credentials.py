@@ -56,26 +56,35 @@ def test_login(email, password):
         return False, f"Unexpected error: {e}"
 
 
+FOLLOWER_ENDPOINTS = [
+    "Follower/ListFollowerContacts",
+    "Follower/ListFollowers",
+    "Follower/GetContacts",
+    "Follower/Contacts",
+    "General/Contacts",
+]
+
 def test_follower_contacts(session_id):
-    """Try listing follower contacts via GET and POST."""
-    url = f"{BASE_URL}/Follower/ListFollowerContacts"
+    """Probe multiple candidate follower endpoint paths."""
     params = {"sessionId": session_id}
 
-    for method in ("GET", "POST"):
-        try:
-            if method == "GET":
-                resp = requests.get(url, params=params, timeout=10)
-            else:
-                resp = requests.post(url, params=params, timeout=10)
+    for path in FOLLOWER_ENDPOINTS:
+        url = f"{BASE_URL}/{path}"
+        for method in ("GET", "POST"):
+            try:
+                if method == "GET":
+                    resp = requests.get(url, params=params, timeout=10)
+                else:
+                    resp = requests.post(url, params=params, timeout=10)
 
-            print(f"\n         [DEBUG] {method} {resp.status_code}: {resp.text[:300]}")
+                print(f"\n         [DEBUG] {method} {path} → {resp.status_code}: {resp.text[:200]}")
 
-            if resp.status_code == 200:
-                return True, resp.json()
-        except Exception as e:
-            print(f"\n         [DEBUG] {method} exception: {e}")
+                if resp.status_code == 200:
+                    return True, resp.json()
+            except Exception as e:
+                print(f"\n         [DEBUG] {method} {path} → exception: {e}")
 
-    return False, "Both GET and POST failed for ListFollowerContacts"
+    return False, "No follower contacts endpoint found — see debug output above"
 
 
 def main():
